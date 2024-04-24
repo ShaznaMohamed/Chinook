@@ -92,6 +92,8 @@ else
     private Modal PlaylistDialog { get; set; }
     [Inject]
     public IArtistService _artistService { get; set; }
+    [Inject]
+    public IPlaylistService _playlistService { get; set; }
 
 
     private Artist Artist;
@@ -118,17 +120,23 @@ else
         return userId;
     }
 
-    private void FavoriteTrack(long trackId)
+    private async Task FavoriteTrack(long trackId)
     {
         var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
 
-        // TODO: add track to Favorites playlist
         if(track != null)
         {
-            track.IsFavorite = true;    // Set the favorite icon colored
+            if (await _playlistService.AddTrackToFavoritePlaylist(trackId, CurrentUserId))
+            {
+                track.IsFavorite = true;    // Set the favorite icon colored
+                InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+            }
+            else
+            {
+                InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} is not added to playlist Favorites.";
+            }
         }
 
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
     }
 
     private void UnfavoriteTrack(long trackId)

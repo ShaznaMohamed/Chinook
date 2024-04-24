@@ -89,17 +89,22 @@ else
         return userId;
     }
 
-    private void FavoriteTrack(long trackId)
+    private async Task FavoriteTrack(long trackId)
     {
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
 
-        // TODO: add track to Favorites playlist
         if (track != null)
         {
-            track.IsFavorite = true;  // Set the favorite icon colored
+            if (await _playlistService.AddTrackToFavoritePlaylist(trackId, CurrentUserId))
+            {
+                InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+                track.IsFavorite = true;  // Set the favorite icon colored
+            }
+            else
+            {
+                InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} is not added to playlist Favorites.";
+            }
         }
-
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
     }
 
     private void UnfavoriteTrack(long trackId)
