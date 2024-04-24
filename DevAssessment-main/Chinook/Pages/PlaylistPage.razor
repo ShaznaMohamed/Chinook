@@ -107,17 +107,23 @@ else
         }
     }
 
-    private void UnfavoriteTrack(long trackId)
+    private async Task UnfavoriteTrack(long trackId)
     {
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
 
-        // TODO: remove track from Favorites playlist
         if (track != null)
         {
-            track.IsFavorite = false;  // Set the un favorite icon colorless
+            if (await _playlistService.RemoveTrackFromMyFavoritePlaylist(trackId, CurrentUserId))
+            {
+                track.IsFavorite = false;  // Set the un favorite icon colorless
+                InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
+            } else
+            {
+                InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} is not removed from playlist Favorites.";
+
+            }
         }
 
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
     }
 
     private void RemoveTrack(long trackId)

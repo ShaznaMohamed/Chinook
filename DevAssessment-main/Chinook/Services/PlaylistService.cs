@@ -75,5 +75,27 @@ namespace Chinook.Services
             }
             
         }
+
+        public async Task<bool> RemoveTrackFromMyFavoritePlaylist(long trackId, string currentUserId)
+        {
+            var dbContext = await _dbFactory.CreateDbContextAsync();
+            var userPlaylist = dbContext.UserPlaylists.Include(p => p.Playlist).FirstOrDefault(u => u.UserId == currentUserId);  // Get the user playlist
+            
+            if (userPlaylist != null)
+            {
+                long favoritePlaylistId = userPlaylist.PlaylistId;      // Get the user's favorite playlist id
+                var selectedTrack = dbContext.Tracks.Include(p => p.Playlists).FirstOrDefault(t => t.TrackId == trackId);   // Get the selected track
+                if (selectedTrack != null)
+                {
+                    var unFavoritePlaylist = selectedTrack.Playlists.FirstOrDefault(p => p.PlaylistId == favoritePlaylistId);  // Check whether the selected track's playlist is favorite
+                    if (unFavoritePlaylist != null)
+                    {
+                        selectedTrack.Playlists.Remove(unFavoritePlaylist);   // Remove the favorite playlist and make it unfavorite
+                        return await dbContext.SaveChangesAsync() > 0;
+                    }
+                }
+            }
+            return false;
+        }
     }
 }
