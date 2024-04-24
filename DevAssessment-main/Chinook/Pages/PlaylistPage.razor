@@ -2,6 +2,7 @@
 @attribute [Authorize]
 
 @using Chinook.Models
+@using Chinook.Services.Interfaces
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
 
@@ -64,6 +65,8 @@ else
     [Parameter] public long PlaylistId { get; set; }
     [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
     [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+    [Inject]
+    public IPlaylistService _playlistService { get; set; }
 
     private Chinook.ClientModels.Playlist Playlist;
     private string CurrentUserId;
@@ -76,22 +79,7 @@ else
         await InvokeAsync(StateHasChanged);
         var DbContext = await DbFactory.CreateDbContextAsync();
 
-        Playlist = DbContext.Playlists
-            .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
-            .Where(p => p.PlaylistId == PlaylistId)
-            .Select(p => new ClientModels.Playlist()
-                {
-                    Name = p.Name,
-                    Tracks = p.Tracks.Select(t => new ClientModels.PlaylistTrack()
-                    {
-                        AlbumTitle = t.Album.Title,
-                        ArtistName = t.Album.Artist.Name,
-                        TrackId = t.TrackId,
-                        TrackName = t.Name,
-                        IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
-                    }).ToList()
-                })
-            .FirstOrDefault();
+        Playlist = await _playlistService.GetPlaylist(PlaylistId, CurrentUserId);
     }
 
     private async Task<string> GetUserId()

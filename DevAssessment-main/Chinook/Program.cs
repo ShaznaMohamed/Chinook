@@ -20,6 +20,7 @@ builder.Services.AddServerSideBlazor();
 
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ChinookUser>>();
 builder.Services.AddTransient<IArtistService, ArtistService>();
+builder.Services.AddTransient<IPlaylistService, PlaylistService>();
 
 var app = builder.Build();
 
