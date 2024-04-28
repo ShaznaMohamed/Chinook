@@ -88,7 +88,6 @@ else
 @code {
     [Parameter] public long ArtistId { get; set; }
     [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
     private Modal PlaylistDialog { get; set; }
     [Inject]
     public IArtistService _artistService { get; set; }
@@ -98,7 +97,6 @@ else
 
     private Artist Artist;
     private List<PlaylistTrack> Tracks;
-    private DbContext DbContext;
     private PlaylistTrack SelectedTrack;
     private string InfoMessage;
     private string CurrentUserId;
@@ -107,7 +105,6 @@ else
     {
         await InvokeAsync(StateHasChanged);
         CurrentUserId = await GetUserId();
-        var DbContext = await DbFactory.CreateDbContextAsync();
 
         Artist = await _artistService.GetSelectedArtist(ArtistId);
         Tracks = await _artistService.GetTracksForArtist(ArtistId, CurrentUserId);
