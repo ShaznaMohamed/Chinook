@@ -108,27 +108,26 @@ namespace Chinook.Services
         }
 
         // Add 'My favorite tracks' to UserPlaylist 
-        private void SetMyFavoriteTrackToUserPlaylist(ChinookContext dbContext, string currentUserId, long PlayListId, Models.Playlist playlist)
+        private void SetMyFavoriteTrackToUserPlaylist(ChinookContext dbContext, string currentUserId, long playListId, Models.Playlist playlist)
         {
-            var currentUser = dbContext.Users.FirstOrDefault(u => u.Id == currentUserId);
-            var currentUserPlayList = dbContext.UserPlaylists.Include(p => p.Playlist).Any(u => u.UserId == currentUserId);
+            var currentUser = dbContext.Users.AsNoTracking().FirstOrDefault(u => u.Id == currentUserId);
+            var currentUserPlayList = dbContext.UserPlaylists.AsNoTracking().Include(p => p.Playlist).Any(u => u.UserId == currentUserId && u.PlaylistId == playListId);
             if (!currentUserPlayList)
             {
                 UserPlaylist newUserPlaylist = new UserPlaylist()
                 {
                     UserId = currentUserId,
-                    User = currentUser,
-                    Playlist = playlist,
-                    PlaylistId = PlayListId
+                    PlaylistId = playListId
                 };
                 dbContext.UserPlaylists.Add(newUserPlaylist);
+
             }
         }
 
         // Add 'My favorite tracks' to Playlist 
         private void SetMyFavoriteTrackToPlaylist(ChinookContext dbContext, long playListId, Models.Playlist playlist)
         {
-            var favoritePlaylist = dbContext.Playlists.Any(p => p.Name == MY_FAVORITE_PLAYLIST_NAME && p.PlaylistId == playListId);
+            var favoritePlaylist = dbContext.Playlists.AsNoTracking().Any(p => p.Name == MY_FAVORITE_PLAYLIST_NAME && p.PlaylistId == playListId);
             if (!favoritePlaylist)
             {
                 dbContext.Playlists.Add(playlist);   // Add 'My favorite track' playlist to the playlists
