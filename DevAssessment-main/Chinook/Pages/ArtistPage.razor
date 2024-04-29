@@ -3,6 +3,7 @@
 
 @using Chinook.Models
 @using Chinook.ClientModels
+@using Chinook.Services
 @using Chinook.Services.Interfaces
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
@@ -90,9 +91,11 @@ else
     [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
     private Modal PlaylistDialog { get; set; }
     [Inject]
-    public IArtistService _artistService { get; set; }
+    private IArtistService _artistService { get; set; }
     [Inject]
-    public IPlaylistService _playlistService { get; set; }
+    private IPlaylistService _playlistService { get; set; }
+    [Inject]
+    private PlaylistEventHandlerService _playlistEventHandlerService { get; set; }
 
 
     private Artist Artist;
@@ -127,6 +130,7 @@ else
             {
                 track.IsFavorite = true;    // Set the favorite icon colored
                 InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+                _playlistEventHandlerService.PublishFavoritePlaylist(track.IsFavorite);
             }
             else
             {
@@ -145,6 +149,8 @@ else
             {
                 track.IsFavorite = false;   // set the un favorite icon colored
                 InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
+                _playlistEventHandlerService.PublishFavoritePlaylist(track.IsFavorite);
+
             } else
             {
                 InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} is not removed from playlist Favorites.";

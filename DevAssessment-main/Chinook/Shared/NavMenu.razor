@@ -1,4 +1,5 @@
 ﻿@using System.Security.Claims
+@using Chinook.Services
 @using Chinook.Services.Interfaces
 @attribute [Authorize]
 
@@ -34,19 +35,26 @@
 
 @code {
     [Inject]
-    public IPlaylistService _playlistService { get; set; }
+    private IPlaylistService _playlistService { get; set; }
     [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+    [Inject]
+    private PlaylistEventHandlerService _playlistEventHandlerService { get; set; }
 
     private bool collapseNavMenu = true;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    private long playlistNumber = 0;
+    private long playlistNumber = 0;  // Default value is set as 0 for scenario of not having a user play list named 'My favorite track'
 
     protected override async Task OnInitializedAsync()
     {
         await InvokeAsync(StateHasChanged);
         var currentUserId = await GetUserId();
 
-        playlistNumber = await _playlistService.GetCurrentUserFavoritePlaylistId(currentUserId);
+        // Subscribe the event of favorite/unfavorite a playlist to hide/show the nave bar option 'My favorite track' based on having a user playlist called 'My favorite track' or not
+         _playlistEventHandlerService.SubscribeFavoritePlaylist().Subscribe(async (bool isFavorite) =>
+        {    
+            playlistNumber = await _playlistService.GetCurrentUserFavoritePlaylistId(currentUserId);
+
+        });
     }
 
     private void ToggleNavMenu()

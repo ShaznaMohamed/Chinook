@@ -48,7 +48,7 @@ else
     private List<Artist> Artists = new List<Artist>();
     private List<Artist> FilteredArtists = new List<Artist>();
     [Inject]
-    public IArtistService _artistService { get; set; }
+    private IArtistService _artistService { get; set; }
 
     private string _searchText = "";
     public string SearchText
@@ -66,12 +66,12 @@ else
         Artists = FilteredArtists = await GetArtists();
     }
 
-    public async Task<List<Artist>> GetArtists()
+    private async Task<List<Artist>> GetArtists()
     {
         return await _artistService.GetArtists();
     }
 
-    public List<Artist> SearchByName(string searchText)
+    private List<Artist> SearchByName(string searchText)
     {
         return searchText != "" && Artists.Any() ? Artists.Where(s => s.Name != null && s.Name.ToLower().Contains(_searchText.ToLower())).ToList() : Artists;
     }
