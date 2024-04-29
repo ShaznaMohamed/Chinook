@@ -2,11 +2,22 @@
 @attribute [Authorize]
 
 @using Chinook.Models
+@using Chinook.Services.Interfaces
 @using Microsoft.EntityFrameworkCore
 
 <PageTitle>Index</PageTitle>
 
-<h1>Artists</h1>
+<div class="d-flex align-items-start">
+    <div class="flex-grow-1">
+        <h1>Artists</h1>
+    </div>
+    <div class="text-center bg-blue-100">
+        <input class="border-4 w-1/3 rounded m-6 p-6 h-8
+               border-blue-300" @bind-value="SearchText"
+               @bind-value:event="oninput"
+               placeholder="Search by name" />
+    </div>
+</div>
 
 @if (Artists == null)
 {
@@ -22,7 +33,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var artist in Artists)
+            @foreach (var artist in FilteredArtists)
             {
                 <tr>
                     <td><a href="Artist/@artist.ArtistId">@artist.Name</a></td>
@@ -34,25 +45,34 @@ else
 }
 
 @code {
-    private List<Artist> Artists;
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
+    private List<Artist> Artists = new List<Artist>();
+    private List<Artist> FilteredArtists = new List<Artist>();
+    [Inject]
+    private IArtistService _artistService { get; set; }
+
+    private string _searchText = "";
+    public string SearchText
+    {
+        get { return _searchText; }
+        set
+        {
+            _searchText = value;
+            FilteredArtists = SearchByName(value);
+        }
+    }
 
     protected override async Task OnInitializedAsync() {
         await InvokeAsync(StateHasChanged);
-        Artists = await GetArtists();
+        Artists = FilteredArtists = await GetArtists();
     }
 
-    public async Task<List<Artist>> GetArtists()
-    {   
-        var dbContext = await DbFactory.CreateDbContextAsync();
-        var users = dbContext.Users.Include(a => a.UserPlaylists).ToList();
-        
-        return dbContext.Artists.ToList();
-    }
-
-    public async Task<List<Album>> GetAlbumsForArtist(int artistId)
+    private async Task<List<Artist>> GetArtists()
     {
-        var dbContext = await DbFactory.CreateDbContextAsync();
-        return dbContext.Albums.Where(a => a.ArtistId == artistId).ToList();
+        return await _artistService.GetArtists();
+    }
+
+    private List<Artist> SearchByName(string searchText)
+    {
+        return searchText != "" && Artists.Any() ? Artists.Where(s => s.Name != null && s.Name.ToLower().Contains(_searchText.ToLower())).ToList() : Artists;
     }
 }

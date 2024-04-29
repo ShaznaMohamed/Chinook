@@ -1,4 +1,9 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using System.Security.Claims
+@using Chinook.Services
+@using Chinook.Services.Interfaces
+@attribute [Authorize]
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Chinook</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -15,23 +20,52 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-@* 
-            <NavLink class="nav-link" href="playlist/playlistnumber">
-                <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
-            </NavLink>
-*@
+        <div>
+                @if (playlistNumber != 0)
+                {
+                    <NavLink class="nav-link" href="@($"playlist/{playlistNumber}")">
+                        <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
+                    </NavLink>
+                }
+        </div>
 </div>
 
     </nav>
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
+    [Inject]
+    private IPlaylistService _playlistService { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+    [Inject]
+    private PlaylistEventHandlerService _playlistEventHandlerService { get; set; }
 
+    private bool collapseNavMenu = true;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private long playlistNumber = 0;  // Default value is set as 0 for scenario of not having a user play list named 'My favorite track'
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+        var currentUserId = await GetUserId();
+
+        // Subscribe the event of favorite/unfavorite a playlist to hide/show the nave bar option 'My favorite track' based on having a user playlist called 'My favorite track' or not
+         _playlistEventHandlerService.SubscribeFavoritePlaylist().Subscribe(async (bool isFavorite) =>
+        {    
+            playlistNumber = await _playlistService.GetCurrentUserFavoritePlaylistId(currentUserId);
+
+        });
+    }
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task<string> GetUserId()
+    {
+        var user = (await authenticationState).User;
+        var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
+        return userId;
     }
 }
